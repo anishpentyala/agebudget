@@ -2,4 +2,6 @@
 from .core import InvalidPlan, audit, loads
 from .comparison import compare
 
-__all__ = ['InvalidPlan', 'audit', 'loads', 'compare']
+from .headroom import residence_headroom
+
+__all__ = ['InvalidPlan', 'audit', 'loads', 'compare', 'residence_headroom']

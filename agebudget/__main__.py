@@ -5,7 +5,7 @@ import os
 import stat
 import sys
 
-from . import InvalidPlan, audit, compare, loads
+from . import InvalidPlan, audit, compare, loads, residence_headroom
 
 MAX_BYTES = 2 * 1024 * 1024
 
@@ -45,10 +45,15 @@ def _run(argv):
     try:
         parser = _Parser(description='Audit declared source-age bounds in a finite DAG')
         parser.add_argument('plan', help='UTF-8 JSON regular file; no network access')
-        parser.add_argument('--compare-to', metavar='PLAN', help='candidate plan using identical budgets and tick unit')
+        modes = parser.add_mutually_exclusive_group()
+        modes.add_argument('--headroom', metavar='HOLD', help='largest admitted residence for one hold under fixed budgets')
+        modes.add_argument('--compare-to', metavar='PLAN', help='candidate plan using identical budgets and tick unit')
         args = parser.parse_args(argv)
         plan = _read_plan(args.plan)
-        report = compare(plan, _read_plan(args.compare_to)) if args.compare_to else audit(plan)
+        if args.headroom is not None:
+            report = residence_headroom(plan, args.headroom)
+        else:
+            report = compare(plan, _read_plan(args.compare_to)) if args.compare_to else audit(plan)
         payload = json.dumps(report, indent=2, ensure_ascii=True, allow_nan=False) + '\n'
         _deliver(payload, sys.stdout)
         return (0 if report['status'] == 'BOUND_WITHIN_BUDGET' else 1), False

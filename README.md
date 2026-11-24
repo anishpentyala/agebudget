@@ -157,3 +157,38 @@ python -m unittest discover -s tests -v
 Tests include finite possibility-set enumeration over synthetic DAGs, independently compared with bound propagation. These are mathematical fixtures, not production validation.
 
 MIT license. No telemetry or network operations.
+
+## One-hold residence headroom
+
+```sh
+agebudget examples/gated.json --headroom redis
+```
+
+The opt-in `agebudget-residence-headroom-v1` report finds the largest admitted
+integer `max_residence` for one selected hold that keeps **every fixed budget**
+within its declared bound. All other fields, topology, budgets and tick units
+stay fixed. It requires a valid plan with every baseline budget established and
+within budget, plus a finite selected residence. Otherwise it refuses with exit2,
+not zero headroom or an inferred repair. Audit and comparison outputs are unchanged.
+`--headroom` and `--compare-to` are mutually exclusive.
+
+The API is `residence_headroom(plan, hold_id)`. Inputs are not modified. The
+report includes the full baseline and boundary audits and the first failing next
+tick audit, so the limiting targets, explanation paths and gates remain visible.
+`additional_residence` is the boundary minus the initial residence. If the boundary
+is the input maximum of 10^15, `domain_limited` is true and `next_tick` is null.
+This means the admitted input domain ended, not unlimited headroom. A selected hold
+can be irrelevant to the budgets or shielded by a rejecting gate.
+
+For an ungated source age3, hold delay2 and initial residence4 with budget12,
+the largest residence is7 and additional residence is3; at8 the declared bound
+is13. Gates that cap at or below a downstream budget may hide all residence
+increases while rejecting every value. This is model arithmetic, **not a runtime
+TTL recommendation**, availability evidence or rollout safety. Changed assumptions,
+other concurrent edits, stale fallback and missing enforcement can invalidate it.
+
+The search uses monotonicity of addition, maximum and fixed gate caps in one
+nonnegative scalar. It performs at most53 complete audits, rather than scanning
+all possible tick values. Existing node/edge/input limits still apply; this is
+not a hard wall-clock or memory guarantee. Exit0 is a completed headroom query;
+exit2 is invalid input, unestablished baseline or failed output delivery.
