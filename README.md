@@ -45,7 +45,9 @@ Every node has an `id`, a `kind`, and exactly the fields below:
 | `merge` | `inputs` | Uses all inputs immediately, with no additional age. Output age is that of the oldest input. Not a race, fastest-replica selection or fallback. |
 | `gate` | `inputs`, `max_age` | Uses all inputs, adds no age, and only returns values whose oldest source age is at most the cap. Rejection is allowed. Cap is required and cannot be `null`. |
 
-Inputs are nonempty lists of distinct existing node IDs. Graphs must be acyclic, including disconnected portions, with at most 8192 edges. Duplicate JSON object keys, nonfinite numbers, floats, booleans used as numbers, extra fields and missing fields are errors. The CLI accepts at most 2 MiB.
+Inputs are nonempty lists of distinct existing node IDs. Graphs must be acyclic, including disconnected portions, with at most 8192 edges. Duplicate JSON object keys, nonfinite numbers, floats, booleans used as numbers, extra fields and missing fields are errors. The CLI accepts at most 2 MiB per input, from regular files only. Directories,
+FIFOs and device inputs are rejected before reading; symlinks to regular files
+are allowed. A regular file on a slow filesystem can still block.
 
 The bound calculation is deliberately simple:
 
@@ -71,6 +73,12 @@ Check statuses:
 Overall status is `UNKNOWN` if any checked target is unknown, otherwise exceeds if any checked bound exceeds, otherwise within. Individual checks are retained, so an unknown does not hide another target's excess.
 
 Exit 0: all checked bounds within budgets. Exit 1: completed audit with an unknown or excess. Exit 2: invalid input, read or output error. An output stream failure can leave partial JSON and is not a successful audit. Input validation errors produce no stdout report. The CLI does not create report files; redirect stdout if needed and check its exit status.
+A verdict is returned only after a complete checked write and flush. Help and
+usage messages use the same checked delivery path. Embedded `main(argv)` returns
+a status without replacing or closing caller streams. Executable wrappers avoid
+retrying failed buffered stdout at shutdown, preserving exit 2 rather than 120.
+Diagnostics are best effort if stderr also fails. Partial output from an error
+is not a usable report.
 
 ```python
 from agebudget import audit, loads

@@ -12,7 +12,7 @@ license-files = ["LICENSE"]
 readme = "README.md"
 
 [project.scripts]
-agebudget = "agebudget.__main__:main"
+agebudget = "agebudget.__main__:entrypoint"
 
 [tool.setuptools.packages.find]
 include = ["agebudget*"]
