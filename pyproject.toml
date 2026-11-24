@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agebudget"
+version = "0.1.0"
+description = "Audit declared source-age bounds through finite residence and rejection-gate graphs"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+readme = "README.md"
+
+[project.scripts]
+agebudget = "agebudget.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["agebudget*"]
