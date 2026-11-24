@@ -1,0 +1,42 @@
+{
+  "schema": "agebudget-plan-v1",
+  "nodes": [
+    {
+      "id": "source",
+      "kind": "source",
+      "max_age": 5
+    },
+    {
+      "id": "redis",
+      "kind": "hold",
+      "inputs": [
+        "source"
+      ],
+      "max_delay": 2,
+      "max_residence": 30
+    },
+    {
+      "id": "local",
+      "kind": "hold",
+      "inputs": [
+        "redis"
+      ],
+      "max_delay": 1,
+      "max_residence": 20
+    },
+    {
+      "id": "gate",
+      "kind": "gate",
+      "inputs": [
+        "local"
+      ],
+      "max_age": 40
+    }
+  ],
+  "budgets": [
+    {
+      "node": "gate",
+      "max_age": 40
+    }
+  ]
+}
