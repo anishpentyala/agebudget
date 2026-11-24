@@ -81,6 +81,47 @@ with open('examples/layered.json', encoding='utf-8') as stream:
 
 `audit` does not mutate inputs. `loads` supplies strict JSON parsing. The CLI, unlike this small API example, enforces the byte limit while reading.
 
+## Compare a proposed model change
+
+```console
+agebudget before.json --compare-to after.json
+```
+
+Both inputs must be valid plans with **identical budget targets and limits**.
+The caller must keep tick units and the meaning of shared node IDs the same;
+the file format cannot verify those assumptions. A changed budget is rejected,
+so loosening a target cannot silently look like a configuration improvement.
+
+For example, copy `examples/layered.json` to `before.json` and `after.json`, then
+change only the local hold's `max_residence` from 20 to 2 in `after.json`.
+Its declared bound falls from 58 to 40 ticks, with `bound_delta: -18`, and the
+unchanged 40-tick budget changes from `BOUND_EXCEEDS_BUDGET` to
+`BOUND_WITHIN_BUDGET`. This does not establish that the shorter residence is
+operationally safe or changes any observed response age.
+
+The `agebudget-comparison-v1` report includes all node IDs in sorted order,
+with full before/after audit rows. Added and removed nodes have one side set
+to `null`. `BOUND_LOWER`, `BOUND_HIGHER` and `BOUND_UNCHANGED` compare finite
+bounds, with signed after-minus-before `bound_delta`. `BOUND_ESTABLISHED`,
+`BOUND_LOST` and `STILL_UNKNOWN` retain unknowns without treating them as
+infinity or zero; their delta is `null`. Inspect the full rows for changed
+node kinds, explanation paths, unknown causes and gate conditions even when
+the bound is unchanged. Checks retain both statuses and bound excesses.
+
+The top-level `status` and exit 0/1 describe the **candidate's budget audit**,
+not whether it is better than the baseline. Exit 2 means either input,
+comparison compatibility, reading or output failed. Each input has its own
+2 MiB limit. Both are validated before stdout receives a report.
+
+```python
+from agebudget import compare
+report = compare(before_plan, after_plan)
+```
+
+Comparison does not prove availability, rollout safety, model equivalence,
+actual freshness or a concrete execution trace. A lower bound may come from
+stronger assumptions or a gate that rejects every value, not a runtime benefit.
+
 ## When not to use it
 
 No HTTP cache implementation or RFC 9111compliance claim. No header parsing, `Age`/`Date` correction, stale-while-revalidate, stale-if-error, validators, refresh scheduling, queues, cache-key isolation, invalidation correctness, clock uncertainty, write visibility, probabilistic freshness or service availability model. A declared gate requiring unavailable provenance is an assumption, not a fix. Unbounded outage fallback should be represented as unknown, not a convenient finite TTL.
