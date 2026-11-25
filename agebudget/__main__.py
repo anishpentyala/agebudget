@@ -5,7 +5,7 @@ import os
 import stat
 import sys
 
-from . import InvalidPlan, audit, compare, loads, residence_headroom
+from . import InvalidPlan, audit, compare, loads, residence_headroom, gate_reliance
 
 MAX_BYTES = 2 * 1024 * 1024
 
@@ -48,11 +48,14 @@ def _run(argv):
         parser = _Parser(description='Audit declared source-age bounds in a finite DAG')
         parser.add_argument('plan', help='UTF-8 JSON regular file; no network access')
         modes = parser.add_mutually_exclusive_group()
+        modes.add_argument('--without-gate', metavar='GATE', help='audit one gate replaced by an immediate merge')
         modes.add_argument('--headroom', metavar='HOLD', help='largest admitted residence for one hold under fixed budgets')
         modes.add_argument('--compare-to', metavar='PLAN', help='candidate plan using identical budgets and tick unit')
         args = parser.parse_args(argv)
         plan = _read_plan(args.plan)
-        if args.headroom is not None:
+        if args.without_gate is not None:
+            report = gate_reliance(plan, args.without_gate)
+        elif args.headroom is not None:
             report = residence_headroom(plan, args.headroom)
         else:
             report = compare(plan, _read_plan(args.compare_to)) if args.compare_to else audit(plan)
