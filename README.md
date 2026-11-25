@@ -203,3 +203,43 @@ Embedded `main(argv)` still does not close or replace caller-owned streams.
 Partial output cannot be retracted and is not a usable audit. These checks do
 not establish disk durability or downstream consumption. Source-checkout fix,
 not a new package-index release; model arithmetic and JSON reports are unchanged.
+
+## Inspect reliance on one rejecting gate
+
+```sh
+agebudget examples/gated.json --without-gate gate
+```
+
+Use the actual gate ID in your plan. The API is `gate_reliance(plan, gate_id)`.
+This opt-in query replaces exactly one declared `gate` with an immediate
+`merge` of its unchanged inputs. It is not removal of a runtime component.
+All other nodes, gates, budgets and tick units stay fixed. Inputs are not
+modified. No baseline pass is required: already-exceeding and unknown baseline
+checks remain visible instead of being presented as newly lost passes.
+
+The `agebudget-gate-reliance-v1` report includes full `baseline` and
+`without_gate` audits, per-node changes and one row per fixed budget.
+`baseline_pass_lost` is true only when a baseline bound was within budget and
+the counterfactual bound exceeds it or becomes unknown. `BOUND_LOST` in the
+node changes means finite became unknown, not infinite or zero; its delta is
+null. A finite bound increase that stays within budget does not lose a pass.
+A gate on an unrelated branch can leave all budget bounds unchanged.
+
+For a source bound20, gate cap10 and budget10, the baseline passes but bypassing
+that gate gives bound20. An unknown source instead loses the established bound.
+A second downstream gate may still cap either counterfactual. The query removes
+only one cap, so unchanged results do not show independence from all gates or
+safe failure of enforcement. Full gate conditions and explanations remain in
+both audits. The reported bounds are conservative declarations, not observed
+violations or likelihoods. Gates can reject every value; no availability or
+runtime bypass safety is established. This query is a diagnostic, not a
+recommendation to disable a gate.
+
+Exit0 means every counterfactual budget is within its declared bound. Exit1
+means a counterfactual excess or unknown, even if that also existed at baseline.
+Exit2 means invalid input, a missing/non-gate selection, or failed delivery.
+`--without-gate`, `--headroom` and `--compare-to` are mutually exclusive. Normal
+audit, comparison and headroom report schemas are unchanged. Existing plan and
+file limits apply. The bounded query performs four audits and retains both
+complete audits plus comparison rows; this is not a hard resource guarantee.
+This is a source-checkout feature, not a new package-index release.
