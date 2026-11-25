@@ -192,3 +192,14 @@ nonnegative scalar. It performs at most53 complete audits, rather than scanning
 all possible tick values. Existing node/edge/input limits still apply; this is
 not a hard wall-clock or memory guarantee. Exit0 is a completed headroom query;
 exit2 is invalid input, unestablished baseline or failed output delivery.
+
+### Strict stream delivery in the source checkout
+
+The checked text boundary requires a built-in integer write count equal to the
+complete payload length. Unavailable streams are delivery errors. The executable
+wrapper checks both standard streams before shutdown, including help and usage
+paths, and suppresses retry of a failed stream so exit2 is not replaced by120.
+Embedded `main(argv)` still does not close or replace caller-owned streams.
+Partial output cannot be retracted and is not a usable audit. These checks do
+not establish disk durability or downstream consumption. Source-checkout fix,
+not a new package-index release; model arithmetic and JSON reports are unchanged.

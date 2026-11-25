@@ -11,8 +11,10 @@ MAX_BYTES = 2 * 1024 * 1024
 
 
 def _deliver(text, stream):
+    if stream is None:
+        raise OSError('output stream is unavailable')
     written = stream.write(text)
-    if written != len(text):
+    if type(written) is not int or written != len(text):
         raise OSError('short output write')
     stream.flush()
 
@@ -75,18 +77,18 @@ def main(argv=None):
 
 def entrypoint():
     """Prevent a failed buffered stdout flush being retried at process shutdown."""
-    code, failed = _run(None)
-    if failed:
+    code, _ = _run(None)
+    for name in ('stdout', 'stderr'):
+        stream = getattr(sys, name)
+        if stream is None:
+            continue
         try:
-            fd = sys.stdout.fileno()
-            sink = os.open(os.devnull, os.O_WRONLY)
-            try:
-                os.dup2(sink, fd)
-            finally:
-                if sink != fd:
-                    os.close(sink)
-        except (OSError, ValueError, AttributeError):
-            sys.stdout = open(os.devnull, 'w')
+            stream.flush()
+        except (OSError, ValueError):
+            # Prevent CPython's shutdown retry replacing exit2 with120.
+            # Only this process-owned wrapper replaces failed streams.
+            setattr(sys, name, None)
+            code = 2
     return code
 
 
