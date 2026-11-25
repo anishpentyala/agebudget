@@ -4,4 +4,6 @@ from .comparison import compare
 
 from .headroom import residence_headroom
 
-__all__ = ['InvalidPlan', 'audit', 'loads', 'compare', 'residence_headroom']
+from .gates import gate_reliance
+
+__all__ = ['InvalidPlan', 'audit', 'loads', 'compare', 'residence_headroom', 'gate_reliance']
